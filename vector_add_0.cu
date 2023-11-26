@@ -45,7 +45,7 @@ int main(){
     for(int i = 0; i < N; i++){
         assert(fabs(out[i] - a[i] - b[i]) < MAX_ERR);
     }
-    printf("out[0] = %f\n", out[0]);
+    printf("out[0] = %f\n", out[1]);
     printf("PASSED\n");
 
     cudaFree(d_a);
