@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 void MatrixInit(float *M, int n, int p) {
     int i, j;
@@ -57,29 +58,36 @@ __global__ void cudaMatrixMult(float *M1, float *M2, float *Mout, int n) {
 
 
 int CPU_test() {
-    //MatrixAdd test
-    int n = 3, p = 3;
+    // MatrixAdd test
+    int n = 1500, p = 1500;
     float *M1, *M2, *Mout;
+
     M1 = (float *)malloc(n * p * sizeof(float));
     M2 = (float *)malloc(n * p * sizeof(float));
 
     MatrixInit(M1, n, p);
     MatrixInit(M2, n, p);
 
+ 
     Mout = (float *)malloc(n * p * sizeof(float));
+    
+    
+    // Measure execution time for MatrixAdd
+    clock_t start_time_add = clock();
     MatrixAdd(M1, M2, Mout, n, p);
+    clock_t end_time_add = clock();
 
-    //MatrixPrint(M1, n, p);
-    //MatrixPrint(M2, n, p);
-    //MatrixPrint(Mout, n, p);
+    double execution_time_add = ((double)end_time_add - start_time_add) / CLOCKS_PER_SEC;
+    printf("Execution time for MatrixAdd: %f seconds\n", execution_time_add);
 
     free(M1);
     free(M2);
     free(Mout);
 
-    //MatrixMult test
-    n = 2;
+    // MatrixMult test
+    n = 1500;
     float *M3, *M4, *Mout2;
+
     M3 = (float *)malloc(n * n * sizeof(float));
     M4 = (float *)malloc(n * n * sizeof(float));
 
@@ -87,11 +95,14 @@ int CPU_test() {
     MatrixInit(M4, n, n);
 
     Mout2 = (float *)malloc(n * n * sizeof(float));
-    MatrixMult(M3, M4, Mout2, n);
 
-    MatrixPrint(M3, n, n);
-    MatrixPrint(M4, n, n);
-    MatrixPrint(Mout2, n, n);
+    // Measure execution time for MatrixMult
+    clock_t start_time_mult = clock();
+    MatrixMult(M3, M4, Mout2, n);
+    clock_t end_time_mult = clock();
+
+    double execution_time_mult = ((double)end_time_mult - start_time_mult) / CLOCKS_PER_SEC;
+    printf("Execution time for MatrixMult: %f seconds\n", execution_time_mult);
 
     free(M3);
     free(M4);
@@ -100,9 +111,12 @@ int CPU_test() {
     return 0;
 }
 
+
+
+ 
 int GPUtest() {
     //cudaMatrixAdd test
-    int n = 3, p = 3;
+    int n = 100, p = 100;
     float *M1, *M2, *Mout;
     float *d_M1, *d_M2, *d_Mout;
 
@@ -121,7 +135,13 @@ int GPUtest() {
     cudaMemcpy(d_M1, M1, n * p * sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(d_M2, M2, n * p * sizeof(float), cudaMemcpyHostToDevice);
 
+    clock_t start_time_add = clock();
     cudaMatrixAdd<<<n, p>>>(d_M1, d_M2, d_Mout, n, p);
+    clock_t end_time_add = clock();
+
+    double execution_time_add = ((double)end_time_add - start_time_add) / CLOCKS_PER_SEC;
+    printf("Execution time for MatrixAdd: %f seconds\n", execution_time_add);
+
 
     cudaMemcpy(Mout, d_Mout, n * p * sizeof(float), cudaMemcpyDeviceToHost);
 
@@ -142,7 +162,7 @@ int GPUtest() {
 
     // cudaMatrixMult test
 
-    n = 2;
+    n = 100;
     float *M3, *M4, *Mout2;
     float *d_M3, *d_M4, *d_Mout2;
 
@@ -161,14 +181,19 @@ int GPUtest() {
     cudaMemcpy(d_M3, M3, n * n * sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(d_M4, M4, n * n * sizeof(float), cudaMemcpyHostToDevice);
 
+    clock_t start_time_mult = clock();
     cudaMatrixMult<<<n, n>>>(d_M3, d_M4, d_Mout2, n);
+    clock_t end_time_mult = clock();
+
+    double execution_time_mult = ((double)end_time_mult - start_time_mult) / CLOCKS_PER_SEC;
+    printf("Execution time for MatrixMult: %f seconds\n", execution_time_mult);
 
     cudaMemcpy(Mout2, d_Mout2, n * n * sizeof(float), cudaMemcpyDeviceToHost);
 
-    MatrixPrint(M3, n, n);
-    MatrixPrint(M4, n, n);
+    //MatrixPrint(M3, n, n);
+    //MatrixPrint(M4, n, n);
 
-    MatrixPrint(Mout2, n, n);
+    //MatrixPrint(Mout2, n, n);
 
     free(M3);
     free(M4);
