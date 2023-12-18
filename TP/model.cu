@@ -59,19 +59,6 @@ int main() {
 
     //void __global__ void subsampling(float *input, int input_size, int kernel_size, float *output);
 
-    // Define a 2x2 subsampling kernel
-    float subsampling_kernel[4] = {0.25, 0.25, 0.25, 0.25};
-
-// Allocate memory on the device for the subsampling kernel
-    float *d_subsampling_kernel;
-    cudaMalloc(&d_subsampling_kernel, 4 * sizeof(float));
-
-    // Copy the subsampling kernel to the device
-    cudaMemcpy(d_subsampling_kernel, subsampling_kernel, 4 * sizeof(float), cudaMemcpyHostToDevice);
-
-
-    convolution<<<1, number_of_filters>>>(d_C1_data, output_size_C1, 2, 1, d_subsampling_kernel, d_S1_data);
-
 
     
     //store the result of the convolution in the host memory
