@@ -51,6 +51,23 @@ void MatrixInit01_3D(float *M, int n, int p, int q) {
                 M[i * p * q + j * q + k] = (static_cast<float>(rand()) / RAND_MAX);
 }
 
+//Define a method for 1D arrays initialization with 0 values
+
+void MatrixInit0(float *M, int n) {
+    int i;
+    for (i = 0; i < n; i++)
+        M[i] = 0;
+}
+
+//Declare the method MatrixInitFilter that initialize a 3d matric of size n*p*q with random valñues between -1 and 1
+
+void MatrixInitFilter(float *M, int n, int p, int q) {
+    int i, j, k;
+    for (i = 0; i < n; i++)
+        for (j = 0; j < p; j++)
+            for (k = 0; k < q; k++)
+                M[i * p * q + j * q + k] = (static_cast<float>(rand()) / RAND_MAX) * 2 - 1;
+}
 
 void MatrixPrint(float *M, int n, int p) {
     int i, j;
@@ -153,7 +170,7 @@ __global__ void convolution(float *input, int input_size, int kernel_size, int n
                 }
 
                 int output_offset = f * output_size * output_size + k * output_size + l;
-                output[output_offset] = sum;
+                output[output_offset] = tanhf(sum);
             }
         }
     }}
@@ -173,4 +190,38 @@ __global__ void avgPooling(float *M, float *P, int n, int p, int q, int poolSize
         }
         P[i * (p/poolSize) * (q/poolSize) + (j/poolSize) * (q/poolSize) + (k/poolSize)] = sum / (poolSize * poolSize);
     }
+}
+
+__global__ void convolution3D(float *input, int input_filters, int input_size, int kernel_size, int number_of_filters, float *kernel, float *output) {
+    int output_size = input_size - kernel_size + 1;
+    int f_out = threadIdx.x; // Current filter index of output
+    int f_in = threadIdx.y; // Current filter index of input
+
+    // Iterate over output positions
+    for (int m = 0; m < output_size; m++) {
+        for (int n = 0; n < output_size; n++) {
+            float sum = 0;
+
+            // Perform convolution operation for each filter
+            for (int x = 0; x < kernel_size; x++) {
+                for (int y = 0; y < kernel_size; y++) {
+                    int input_offset = (f_in * input_size + m + x) * input_size + n + y;
+                    int kernel_offset = (f_out * input_filters * kernel_size * kernel_size) + (f_in * kernel_size * kernel_size) + (x * kernel_size) + y;
+                    sum += input[input_offset] * kernel[kernel_offset];
+                }
+            }
+            int output_offset = (f_out * output_size + m) * output_size + n;
+            output[output_offset] = sum;
+        }
+    }
+}
+
+//Define a denseLayer method, that takes a 1D array of size n as input, a 2D array of size n*p as weights and a 1D array of size p as output. Also takes n and p as parameters
+
+__global__ void denseLayer(float *input, float *weights, float *output, int n, int p) {
+    int i = blockIdx.x;
+    int j = threadIdx.x;
+    output[i * p + j] = 0;
+    for (int k = 0; k < n; k++)
+        output[i * p + j] += input[i * n + k] * weights[k * p + j];
 }
