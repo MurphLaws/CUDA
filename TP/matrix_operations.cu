@@ -48,7 +48,7 @@ void MatrixInit01_3D(float *M, int n, int p, int q) {
     for (i = 0; i < n; i++)
         for (j = 0; j < p; j++)
             for (k = 0; k < q; k++)
-                M[i * p * q + j * q + k] = 1;//(static_cast<float>(rand()) / RAND_MAX);
+                M[i * p * q + j * q + k] = (static_cast<float>(rand()) / RAND_MAX);
 }
 
 
@@ -134,6 +134,7 @@ __global__ void convolution(float *input, int input_size, int kernel_size, int n
     int output_size = input_size - kernel_size + 1;
     int i = threadIdx.x; // Current row index
     int j = threadIdx.y; // Current column index
+ 
 
     // Iterate over filters
     for (int f = 0; f < number_of_filters; f++) {
@@ -155,32 +156,21 @@ __global__ void convolution(float *input, int input_size, int kernel_size, int n
                 output[output_offset] = sum;
             }
         }
-    }
-}
+    }}
 
 
+__global__ void avgPooling(float *M, float *P, int n, int p, int q, int poolSize) {
+    int i = blockIdx.x;
+    int j = threadIdx.y * poolSize;
+    int k = threadIdx.x * poolSize;
 
-__global__ void subsampling(float *input, int input_size, int kernel_size, int number_of_filters, float *output) {
-    int output_size = input_size / kernel_size;
-    int i = threadIdx.x; // Current row index
-    int j = threadIdx.y; // Current column index
-    int f = blockIdx.x; // Current filter index
-
-    // Iterate over output positions
-    for (int k = 0; k < output_size; k++) {
-        for (int l = 0; l < output_size; l++) {
-            float sum = 0;
-
-            // Perform subsampling operation
-            for (int m = 0; m < kernel_size; m++) {
-                for (int n = 0; n < kernel_size; n++) {
-                    int input_offset = (f * input_size + (i + k * kernel_size + m) * input_size + (j + l * kernel_size + n));
-                    sum += input[input_offset];
-                }
+    if (i < n && j < p && k < q) {
+        float sum = 0.0;
+        for (int m = 0; m < poolSize && j + m < p; m++) {
+            for (int l = 0; l < poolSize && k + l < q; l++) {
+                sum += M[i * p * q + (j + m) * q + (k + l)];
             }
-
-            int output_offset = (f * output_size + i) * output_size + j;
-            output[output_offset] = sum / (kernel_size * kernel_size);
         }
+        P[i * (p/poolSize) * (q/poolSize) + (j/poolSize) * (q/poolSize) + (k/poolSize)] = sum / (poolSize * poolSize);
     }
 }

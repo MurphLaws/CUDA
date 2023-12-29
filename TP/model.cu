@@ -50,22 +50,25 @@ int main() {
     cudaMemcpy(d_raw_data, raw_data, image_size*image_size*sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(d_C1_data, C1_data, number_of_filters*output_size_C1*output_size_C1*sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(d_C1_kernel, C1_kernel, number_of_filters*kernel_size*kernel_size*sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_S1_data, S1_data, number_of_filters*output_size_S1*output_size_S1*sizeof(float), cudaMemcpyHostToDevice);
     
 
     //Call the convolution function defined as __global__ void convolution(float *input, int input_size, int kernel_size, int number_of_filters, float *kernel, float *output);
 
-
-    convolution<<<1, number_of_filters>>>(d_raw_data, image_size, kernel_size, number_of_filters, d_C1_kernel, d_C1_data);
-
-    //void __global__ void subsampling(float *input, int input_size, int kernel_size, float *output);
+    convolution<<<1,number_of_filters>>>(d_raw_data, image_size, kernel_size, number_of_filters, d_C1_kernel, d_C1_data);
 
 
-    
-    //store the result of the convolution in the host memory
+    //__global__ void avgPooling(float *M, float *P, int n, int p, int q, int poolSize)
+    dim3 grid(6);
+    dim3 block(4, 4);
+    avgPooling<<<grid,block>>>(d_C1_data, d_S1_data, number_of_filters, output_size_C1, output_size_C1, 2);
 
     cudaMemcpy(C1_data, d_C1_data, number_of_filters*output_size_C1*output_size_C1*sizeof(float), cudaMemcpyDeviceToHost);
     cudaMemcpy(S1_data, d_S1_data, number_of_filters*output_size_S1*output_size_S1*sizeof(float), cudaMemcpyDeviceToHost);
 
+
+    
+  
     //print the result of the convolution using the MatrixPrint3D function
     MatrixPrint(raw_data, image_size,image_size);
     printf("-----------------------------------------\n");
@@ -74,6 +77,10 @@ int main() {
     MatrixPrint3D(C1_data, number_of_filters, output_size_C1, output_size_C1);
     printf("-----------------------------------------\n");
     MatrixPrint3D(S1_data, number_of_filters, output_size_S1, output_size_S1);
+
+    //MatrixPrint3D(S1_data, number_of_filters, output_size_S1, output_size_S1);
+
+    //print the C1_data array using loops. Print is as a 1d array, only using one loop
 
 
     

@@ -10,11 +10,11 @@ void MatrixInit0_3D(float *M, int n, int p, int q);
 void MatrixInit01_3D(float *M, int n, int p, int q);
 void MatrixMult(float *A, float *B, float *C, int n, int p, int m);
 void MatrixPrint3D(float *M, int n, int p, int q);
-__global__ void subsampling(float *input, int input_size, int kernel_size, float *output);
+
+__global__ void avgPooling3D(float* input, float* output, int inputWidth, int inputHeight, int inputDepth, int filterSize);
 __global__ void convolution(float *input, int input_size, int kernel_size, int number_of_filters, float *kernel, float *output);
 __global__ void cudaMatrixSum(float *M, float *sum, int n, int p);
 __global__ void cudaMatrixAdd(float *A, float *B, float *C, int n, int p);
 __global__ void cudaMatrixMult(float *A, float *B, float *C, int n, int p, int m);
-
-
+__global__ void avgPooling(float *M, float *P, int n, int p, int q, int poolSize);
 #endif // MATRIX_MULT_CUH
