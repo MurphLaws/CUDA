@@ -278,3 +278,22 @@ void printGrayscaleImage(int height, int width, float *img) {
         printf("\n");
     }
 }
+
+
+void readArrayFromFile(const char* filename, float* array, int size) {
+    FILE* file = fopen(filename, "r");
+    if (file == NULL) {
+        fprintf(stderr, "Error opening file: %s\n", filename);
+        exit(EXIT_FAILURE);
+    }
+
+    for (int i = 0; i < size; ++i) {
+        if (fscanf(file, "%f", &array[i]) != 1) {
+            fprintf(stderr, "Error reading from file: %s\n", filename);
+            fclose(file);
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    fclose(file);
+}

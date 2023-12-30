@@ -31,7 +31,9 @@ int main(){
 
     int kernel_size = 5;
     float *C1_kernel = (float*)malloc(C1_filters*kernel_size*kernel_size*sizeof(float));
-    MatrixInitFilter(C1_kernel, C1_filters, kernel_size, kernel_size); //CHANGE FOR FILE
+
+    readArrayFromFile("C1.txt", C1_kernel, C1_filters*kernel_size*kernel_size);
+   
 
     //S2 DECLARATION
 
@@ -47,7 +49,8 @@ int main(){
     MatrixInit0_3D(C3_data, C3_filters, output_size_C3, output_size_C3); 
 
     float *C3_kernel = (float*)malloc(C3_filters*C1_filters*kernel_size*kernel_size*sizeof(float));
-    MatrixInitFilter(C3_kernel, C3_filters, kernel_size, kernel_size); //CHANGE FOR FILE
+    
+    readArrayFromFile("C3.txt", C3_kernel, C1_filters*kernel_size*kernel_size);
 
 
     //S4 DECLARATION
@@ -159,15 +162,15 @@ int main(){
     cudaMemcpy(C6_data, d_C6_data, C6_output*sizeof(float), cudaMemcpyDeviceToHost);
     cudaMemcpy(C7_data, d_C7_data, C7_output*sizeof(float), cudaMemcpyDeviceToHost);
 
+
     printGrayscaleImage(HEIGHT, WIDTH, img);
-
-
     printf("-----------------------------------------\n");
     MatrixPrint(C7_data, C7_output, 1);
     printf("-----------------------------------------\n");
-    
+ 
+   
+  
 
-    
 
     //MEMORY FREEING
 

@@ -23,6 +23,7 @@ float *generateGrayscaleImage();
 void makeImage(float *img);
 void charBckgrndPrint(char *str, float rgb[3]);
 void printGrayscaleImage(int height, int width, float *img);
+void readArrayFromFile(const char* filename, float* array, int size);
 
 __global__ void avgPooling3D(float* input, float* output, int inputWidth, int inputHeight, int inputDepth, int filterSize);
 __global__ void convolution(float *input, int input_size, int kernel_size, int number_of_filters, float *kernel, float *output);
@@ -34,4 +35,5 @@ __global__ void activation_tanh(float* M, float n) ;
 __device__ float softmax(float x, float *arr, int n);
 __global__ void denseLayer(float *input, float *weights, float *output, int n, int p, Activation activation);
 __global__ void convolution3D(float *input, int input_filters, int input_size, int kernel_size, int number_of_filters, float *kernel, float *output);
+
 #endif // MATRIX_MULT_CUH
