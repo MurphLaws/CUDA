@@ -3,16 +3,10 @@
 #include <time.h>
 #include "matrix_operations.cuh"
 
-/*
-L'architecture du réseau LeNet-5 est composé de plusieurs couches :
 
-Layer 1- Couche d'entrée de taille 32x32 correspondant à la taille des images de la base de donnée MNIST
+#define WIDTH 28
+#define HEIGHT 28
 
-Layer 2- Convolution avec 6 noyaux de convolution de taille 5x5. La taille résultantes est donc de 6x28x28.
-
-Layer 3- Sous-échantillonnage d'un facteur 2. La taille résultantes des données est donc de 6x14x14.
-
-*/
 
 void MatrixInit(float *M, int n, int p) {
     int i, j;
@@ -29,9 +23,6 @@ void MatrixInit01_2D(float *M, int n, int p) {
         for (j = 0; j < p; j++)
             M[i * p + j] = (static_cast<float>(rand()) / RAND_MAX);
 }
-
-//Declare the method MatrixInitFilter that initialize a 3d matric of size n*p*q with 0 values
-
 void MatrixInit0_3D(float *M, int n, int p, int q) {
     int i, j, k;
     for (i = 0; i < n; i++)
@@ -41,7 +32,6 @@ void MatrixInit0_3D(float *M, int n, int p, int q) {
 }
 
 
-//Declare the method MatrixInit01_3D that initialize a 3d matric of size n*p*q with random valñues between 0 and 1
 
 void MatrixInit01_3D(float *M, int n, int p, int q) {
     int i, j, k;
@@ -51,15 +41,12 @@ void MatrixInit01_3D(float *M, int n, int p, int q) {
                 M[i * p * q + j * q + k] = (static_cast<float>(rand()) / RAND_MAX);
 }
 
-//Define a method for 1D arrays initialization with 0 values
-
 void MatrixInit0(float *M, int n) {
     int i;
     for (i = 0; i < n; i++)
         M[i] = 0;
 }
 
-//Declare the method MatrixInitFilter that initialize a 3d matric of size n*p*q with random valñues between -1 and 1
 
 void MatrixInitFilter(float *M, int n, int p, int q) {
     int i, j, k;
@@ -102,8 +89,6 @@ void MatrixMult(float *M1, float *M2, float *Mout, int n){
 }
 
 
-//Define a print 3d matrix method that prints a 3d matrix of size n*p*q, printing each matrix of size p*q separated 
-// by a line
 
 
 void MatrixPrint3D(float *M, int n, int p, int q) {
@@ -134,7 +119,6 @@ __global__ void cudaMatrixMult(float *M1, float *M2, float *Mout, int n) {
         Mout[i * n + j] += M1[i * n + k] * M2[k * n + j];
 }
 
-//Define a method that sum all the elements into a matrix
 
 __global__ void cudaMatrixSum(float *M, float *sum, int n, int p) {
     int i = blockIdx.x;
@@ -216,12 +200,81 @@ __global__ void convolution3D(float *input, int input_filters, int input_size, i
     }
 }
 
-//Define a denseLayer method, that takes a 1D array of size n as input, a 2D array of size n*p as weights and a 1D array of size p as output. Also takes n and p as parameters
 
-__global__ void denseLayer(float *input, float *weights, float *output, int n, int p) {
+
+__device__ float softmax(float x, float *arr, int n) {
+    float sum = 0.0;
+    for (int i = 0; i < n; i++)
+        sum += expf(arr[i]);
+    return expf(x) / sum;
+}
+
+__global__ void denseLayer(float *input, float *weights, float *output, int n, int p, Activation activation) {
     int i = blockIdx.x;
     int j = threadIdx.x;
     output[i * p + j] = 0;
     for (int k = 0; k < n; k++)
         output[i * p + j] += input[i * n + k] * weights[k * p + j];
+
+    // Apply activation function
+    if (activation == TANH) {
+        output[i * p + j] = tanhf(output[i * p + j]);
+    } else if (activation == SOFTMAX) {
+        output[i * p + j] = softmax(output[i * p + j], output + i * p, p);
+    }
+}
+
+float *generateGrayscaleImage() {
+    int i, j;
+    float *img;
+    unsigned int magic, nbImg, nbRows, nbCols;
+    unsigned char val;
+    FILE *fptr;
+
+    // Malloc image
+    img = (float *)malloc(HEIGHT * WIDTH * sizeof(float));
+
+    // Open File
+    if ((fptr = fopen("train-images.idx3-ubyte", "rb")) == NULL) {
+        printf("Can't open file");
+        exit(1);
+    }
+
+    // Read File
+    fread(&magic, sizeof(int), 1, fptr);
+    fread(&nbImg, sizeof(int), 1, fptr);
+    fread(&nbRows, sizeof(int), 1, fptr);
+    fread(&nbCols, sizeof(int), 1, fptr);
+
+    for (i = 0; i < HEIGHT; i++) {
+        for (j = 0; j < WIDTH; j++) {
+            fread(&val, sizeof(unsigned char), 1, fptr);
+            img[i * WIDTH + j] = (float)val;
+        }
+    }
+
+    // Close the file
+    fclose(fptr);
+
+    return img;
+}
+
+void charBckgrndPrint(const char *str, int rgb[3])
+{
+    printf("\033[48;2;%d;%d;%dm", rgb[0], rgb[1], rgb[2]);
+    printf("%s\033[0m", str);
+}
+
+void printGrayscaleImage(int height, int width, float *img) {
+    int row, col;
+    const char *str = "  ";
+    for (row = 0; row < height; row++) {
+        for (col = 0; col < width; col++) {
+            float pixel_value = img[row * width + col];
+            int rounded_pixel = (int)pixel_value;
+            int grayscale_rgb[3] = {rounded_pixel, rounded_pixel, rounded_pixel};
+            charBckgrndPrint(str, grayscale_rgb);
+        }
+        printf("\n");
+    }
 }
