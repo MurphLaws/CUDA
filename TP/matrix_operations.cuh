@@ -19,7 +19,7 @@ void MatrixMult(float *A, float *B, float *C, int n, int p, int m);
 void MatrixPrint3D(float *M, int n, int p, int q);
 void MatrixInitFilter(float *M, int n, int p, int q);
 void MatrixInit0(float *M, int n);
-float *generateGrayscaleImage();
+float *generateGrayscaleImage(int imageIndex);
 void makeImage(float *img);
 void charBckgrndPrint(char *str, float rgb[3]);
 void printGrayscaleImage(int height, int width, float *img);

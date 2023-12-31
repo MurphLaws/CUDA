@@ -7,19 +7,24 @@
 #define HEIGHT 28
 
 
-int main(){
+
+int main(int argc, char* argv[]) {
+        if (argc != 2) {
+            fprintf(stderr, "Usage: %s MNISTidx\n", argv[0]);
+            return 1;
+        }
+
+    int MNISTidx = atoi(argv[1]);
+
 
     float *d_raw_data, *d_C1_data, *d_S2_data, *d_C1_kernel, *d_C3_data,*d_C3_kernel, *d_S4_data, *d_C5_data, *d_C5_weights, *d_C6_data, *d_C6_weights, *d_C7_data, *d_C7_weights;
 
-    float *img;
-    img = generateGrayscaleImage();
- 
 
     //INPUT IMAGE
     int image_size = 28;
     float *raw_data = (float*)malloc(image_size*image_size*sizeof(float));
 
-   raw_data = img;
+    raw_data = generateGrayscaleImage(MNISTidx);
 
     //C1 DECLARATION
 
@@ -48,9 +53,9 @@ int main(){
     float *C3_data = (float*)malloc(C3_filters*output_size_C3*output_size_C3*sizeof(float));
     MatrixInit0_3D(C3_data, C3_filters, output_size_C3, output_size_C3); 
 
-    float *C3_kernel = (float*)malloc(C3_filters*C1_filters*kernel_size*kernel_size*sizeof(float));
+    float *C3_kernel = (float*)malloc(C3_filters*kernel_size*kernel_size*sizeof(float));
     
-    readArrayFromFile("C3.txt", C3_kernel, C1_filters*kernel_size*kernel_size);
+    readArrayFromFile("C3.txt", C3_kernel, C3_filters*kernel_size*kernel_size);
 
 
     //S4 DECLARATION
@@ -68,7 +73,8 @@ int main(){
     MatrixInit0(C5_data, C5_output);
 
     float *C5_weights = (float*)malloc(C5_input*C5_output*sizeof(float));
-    MatrixInitFilter(C5_weights, C5_output, C5_input, 1); //CHANGE FOR FILE
+    
+    readArrayFromFile("C5.txt", C5_weights, C5_input*C5_output);
 
     // C6
 
@@ -79,7 +85,10 @@ int main(){
     MatrixInit0(C6_data, C6_output);
 
     float *C6_weights = (float*)malloc(C6_input*C6_output*sizeof(float));
-    MatrixInitFilter(C6_weights, C6_output, C6_input, 1); //CHANGE FOR FILE
+
+    readArrayFromFile("C6.txt", C6_weights, C6_input*C6_output);
+    
+    
 
     // C7
 
@@ -90,7 +99,8 @@ int main(){
     MatrixInit0(C7_data, C7_output);
 
     float *C7_weights = (float*)malloc(C7_input*C7_output*sizeof(float));
-    MatrixInitFilter(C7_weights, C7_output, C7_input, 1); //CHANGE FOR FILE
+    
+    readArrayFromFile("C7.txt", C7_weights, C7_input*C7_output);
 
 
 
@@ -163,13 +173,12 @@ int main(){
     cudaMemcpy(C7_data, d_C7_data, C7_output*sizeof(float), cudaMemcpyDeviceToHost);
 
 
-    printGrayscaleImage(HEIGHT, WIDTH, img);
-    printf("-----------------------------------------\n");
-    MatrixPrint(C7_data, C7_output, 1);
-    printf("-----------------------------------------\n");
+
+    //void printGrayscaleImage(int height, int width, float *img) 
+    printGrayscaleImage(28, 28, raw_data);
+    MatrixPrint(C7_data, 10, 1);
  
    
-  
 
 
     //MEMORY FREEING

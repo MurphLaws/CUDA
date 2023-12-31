@@ -133,18 +133,17 @@ __global__ void cudaMatrixSum(float *M, float *sum, int n, int p) {
 
 __global__ void convolution(float *input, int input_size, int kernel_size, int number_of_filters, float *kernel, float *output) {
     int output_size = input_size - kernel_size + 1;
-    int i = threadIdx.x; // Current row index
-    int j = threadIdx.y; // Current column index
+    int i = threadIdx.x;
+    int j = threadIdx.y; 
  
 
-    // Iterate over filters
     for (int f = 0; f < number_of_filters; f++) {
-        // Iterate over output positions
+      
         for (int k = 0; k < output_size; k++) {
             for (int l = 0; l < output_size; l++) {
                 float sum = 0;
 
-                // Perform convolution operation
+                
                 for (int m = 0; m < kernel_size; m++) {
                     for (int n = 0; n < kernel_size; n++) {
                         int input_offset = (i + k + m) * input_size + (j + l + n);
@@ -175,30 +174,7 @@ __global__ void avgPooling(float *M, float *P, int n, int p, int q, int poolSize
         P[i * (p/poolSize) * (q/poolSize) + (j/poolSize) * (q/poolSize) + (k/poolSize)] = sum / (poolSize * poolSize);
     }
 }
-
-__global__ void convolution3D(float *input, int input_filters, int input_size, int kernel_size, int number_of_filters, float *kernel, float *output) {
-    int output_size = input_size - kernel_size + 1;
-    int f_out = threadIdx.x; // Current filter index of output
-    int f_in = threadIdx.y; // Current filter index of input
-
-    // Iterate over output positions
-    for (int m = 0; m < output_size; m++) {
-        for (int n = 0; n < output_size; n++) {
-            float sum = 0;
-
-            // Perform convolution operation for each filter
-            for (int x = 0; x < kernel_size; x++) {
-                for (int y = 0; y < kernel_size; y++) {
-                    int input_offset = (f_in * input_size + m + x) * input_size + n + y;
-                    int kernel_offset = (f_out * input_filters * kernel_size * kernel_size) + (f_in * kernel_size * kernel_size) + (x * kernel_size) + y;
-                    sum += input[input_offset] * kernel[kernel_offset];
-                }
-            }
-            int output_offset = (f_out * output_size + m) * output_size + n;
-            output[output_offset] = sum;
-        }
-    }
-}
+ 
 
 
 
@@ -209,6 +185,9 @@ __device__ float softmax(float x, float *arr, int n) {
     return expf(x) / sum;
 }
 
+//For the dense layers, considering we have three of those, with two different
+// activation functions, we have to use a conditional  to choose the activation function
+
 __global__ void denseLayer(float *input, float *weights, float *output, int n, int p, Activation activation) {
     int i = blockIdx.x;
     int j = threadIdx.x;
@@ -216,7 +195,7 @@ __global__ void denseLayer(float *input, float *weights, float *output, int n, i
     for (int k = 0; k < n; k++)
         output[i * p + j] += input[i * n + k] * weights[k * p + j];
 
-    // Apply activation function
+   
     if (activation == TANH) {
         output[i * p + j] = tanhf(output[i * p + j]);
     } else if (activation == SOFTMAX) {
@@ -224,36 +203,42 @@ __global__ void denseLayer(float *input, float *weights, float *output, int n, i
     }
 }
 
-float *generateGrayscaleImage() {
+//this function is inspired in the provided MNIST pinrint function
+float *generateGrayscaleImage(int imageIndex) {
     int i, j;
     float *img;
     unsigned int magic, nbImg, nbRows, nbCols;
     unsigned char val;
     FILE *fptr;
 
-    // Malloc image
+ 
     img = (float *)malloc(HEIGHT * WIDTH * sizeof(float));
-
-    // Open File
+ 
     if ((fptr = fopen("train-images.idx3-ubyte", "rb")) == NULL) {
         printf("Can't open file");
         exit(1);
     }
-
-    // Read File
+ 
     fread(&magic, sizeof(int), 1, fptr);
     fread(&nbImg, sizeof(int), 1, fptr);
     fread(&nbRows, sizeof(int), 1, fptr);
     fread(&nbCols, sizeof(int), 1, fptr);
+ 
+    if (imageIndex < 0 || imageIndex >= nbImg) {
+        printf("Invalid image index");
+        exit(1);
+    }
 
+ 
+    fseek(fptr, 16 + imageIndex * HEIGHT * WIDTH * sizeof(unsigned char), SEEK_SET);
+ 
     for (i = 0; i < HEIGHT; i++) {
         for (j = 0; j < WIDTH; j++) {
             fread(&val, sizeof(unsigned char), 1, fptr);
             img[i * WIDTH + j] = (float)val;
         }
     }
-
-    // Close the file
+ 
     fclose(fptr);
 
     return img;
@@ -280,6 +265,7 @@ void printGrayscaleImage(int height, int width, float *img) {
 }
 
 
+//This function heps us to read the exported .txt weights from the python script
 void readArrayFromFile(const char* filename, float* array, int size) {
     FILE* file = fopen(filename, "r");
     if (file == NULL) {
