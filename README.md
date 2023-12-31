@@ -14,3 +14,8 @@ This repository contains hands-on examples and practical exercises for programmi
 
 Los archivos importantes de cuda necesarios para la ejecucion del modelo LeNet5 son `LeNet5.cu` and `matrix_operations.cu`. El ejecutable resultante toma un unico argumento: la ID de una imagen del MNIST. La output sera una impresion de la imagen junto con los resultados de la ultima capa FC:
 
+
+![image](https://github.com/MurphLaws/CUDA/assets/36343734/cc74c425-472f-4020-8708-aed6bf42a764)
+![image](https://github.com/MurphLaws/CUDA/assets/36343734/b1aa2331-5983-4119-94f2-eae2979bfc40)
+
+
